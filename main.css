@@ -1,0 +1,152 @@
+body {
+    font-family: Arial, sans-serif;
+    margin: 20px;
+    background: #f9f9f9;
+}
+
+.form-section {
+    max-width: 500px;
+    background: #fff;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    margin-bottom: 30px;
+}
+
+.a5-page {
+    width: 148mm;
+    height: 210mm;
+    background: #fff;
+    border: 1px solid #ccc;
+    padding: 20px;
+    margin: 10px auto;
+    page-break-after: always;
+    display: flex;
+    flex-direction: column;
+    gap: 25px;
+}
+
+.exercise {
+    font-size: inherit;
+    margin: 5px;
+    display: inline-block;
+    vertical-align: top;
+}
+
+.vertical-exercise {
+    display: flex;
+    justify-content: center;
+}
+
+.with-result {
+    color: red;
+    font-weight: bold;
+}
+
+.vertical-operation {
+    display: inline-block;
+    white-space: pre;
+    font-size: 22px;
+}
+
+.math-line {
+    display: block;
+    border-top: 2px solid #000;
+    margin: 2px 0;
+    height: 2px;
+    width: 66%;
+}
+
+.grid-container {
+    display: grid;
+    gap: 10px;
+    flex: 1;
+    padding: 5px;
+}
+
+.horizontal-30 {
+    grid-template-columns: repeat(2, 1fr);
+    grid-template-rows: repeat(20, auto);
+    font-size: 17px;
+}
+
+.horizontal-50 {
+    grid-template-columns: repeat(3, 1fr);
+    grid-template-rows: repeat(12, auto);
+    font-size: 14px;
+}
+
+
+.vertical-15 {
+    grid-template-columns: repeat(5, 1fr);
+    grid-template-rows: repeat(3, auto);
+    font-size: 18px;
+}
+
+.vertical-25 {
+    grid-template-columns: repeat(5, 1fr);
+    grid-template-rows: repeat(5, auto);
+    font-size: 18px;
+}
+
+.vertical-36 {
+    grid-template-columns: repeat(6, 1fr);
+    grid-template-rows: repeat(6, auto);
+    font-size: 18px;
+}
+
+.invisible {
+    opacity: 0;
+}
+
+.download-buttons {
+    text-align: left;
+    margin-bottom: 40px;
+}
+
+.download-buttons button {
+    margin: 10px;
+    padding: 10px 20px;
+    font-size: 16px;
+    cursor: pointer;
+}
+
+.page-header {
+    margin-bottom: 30px;
+    text-align: center;
+    font-family: Arial, sans-serif;
+}
+
+.page-header h1 {
+    margin: 10px 0 5px 0;
+    font-size: 30px;
+    font-family: cursive, sans-serif;
+}
+
+.page-header h2 {
+    margin: 4px 0 10px 0;
+    font-size: 18px;
+    font-weight: normal;
+    font-family: cursive, sans-serif;
+}
+
+.page-meta {
+    position: absolute;
+    text-align: left;
+    font-size: 15px;
+    font-family: cursive, sans-serif;
+    margin: 15px 10px;
+    line-height: 1.4;
+}
+
+.page-header-body {
+    width: 100%;
+}
+
+.page-req {
+    text-align: left;
+    font-size: 22px;
+    font-family: cursive, sans-serif;
+    text-decoration: underline;
+    line-height: 1.4;
+}
