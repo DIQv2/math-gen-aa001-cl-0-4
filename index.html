@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="ro">
+
+<head>
+    <meta charset="UTF-8" />
+    <title>Generator Probleme Matematice</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <link rel="stylesheet" href="main.css">
+</head>
+
+<body>
+
+    <div class="form-section">
+        <h2>Generator Probleme Matematice</h2>
+        <form id="mathForm">
+
+            <label>Număr întrebări:
+                <select id="questionCount">
+                    <optgroup label="Orizontal">
+                        <option value="horizontal-30">30 întrebări (15 rânduri - 2 coloane)</option>
+                        <option value="horizontal-50">50 întrebări (3 coloane)</option>
+                    </optgroup>
+                    <optgroup label="Vertical">
+                        <option value="vertical-15">15 întrebări (3 rânduri / 5 coloane)</option>
+                        <option value="vertical-25">25 întrebări (5 rânduri / 5 coloane)</option>
+                        <option value="vertical-36">36 întrebări (6 rânduri / 6 coloane)</option>
+                    </optgroup>
+                </select>
+            </label><br><br>
+
+            <label>Operație:
+                <select id="operation">
+                    <option value="+">Adunare (+)</option>
+                    <option value="-">Scădere (-)</option>
+                </select>
+            </label><br><br>
+
+            <label>Cu trecere peste ordin:
+                <input type="checkbox" id="carryOver" />
+            </label><br><br>
+
+            <label>Nr. cifre termen 1:
+                <input type="number" id="digits1" min="1" max="5" value="2" />
+            </label><br><br>
+
+            <label>Nr. cifre termen 2:
+                <input type="number" id="digits2" min="1" max="5" value="2" />
+            </label><br><br>
+
+            <label>Rezultat între:
+                <input type="number" id="minResult" value="0" /> și
+                <input type="number" id="maxResult" value="100" />
+            </label><br><br>
+
+            <hr><br>
+            <label for="title">Titlu:</label><br>
+            <input type="text" id="title" placeholder="Exerciții Matematice"><br><br>
+
+            <label for="subtitle">Subtitlu:</label><br>
+            <input type="text" id="subtitle" placeholder="Clasa a II-a"><br><br>
+
+            <label for="requirement">Cerinta:</label><br>
+            <textarea id="requirement" rows="3" placeholder="Rezolvă următoarele exerciții."></textarea><br><br>
+
+            <label><input type="checkbox" id="showName"> Nume</label><br>
+            <label><input type="checkbox" id="showDate"> Data</label><br>
+            <label><input type="checkbox" id="showScore"> Scor</label><br><br>
+
+
+            <button type="submit">Generează Probleme</button>
+        </form>
+    </div>
+
+    <div class="download-buttons">
+        <button onclick="downloadPageAsImage(0)">Descarcă Probleme</button>
+        <button onclick="downloadPageAsImage(1)">Descarcă Rezolvari</button>
+    </div>
+
+    <div id="pagesContainer"></div>
+
+    <script>
+        function formatExercise(a, b, operation, showResult, mode) {
+            const result = operation === '+' ? a + b : a - b;
+
+            if (mode === 'vertical') {
+                const maxLength = Math.max(a.toString().length, b.toString().length, result.toString().length);
+
+                const aStr = a.toString().padStart(maxLength, ' ').replace(/ /g, '  ');
+                const bStr = b.toString().padStart(maxLength, ' ').replace(/ /g, '  ');
+                const rStr = result.toString().padStart(maxLength, ' ').replace(/ /g, '  ');
+
+
+                let html = `<div class="vertical-operation">`;
+                html += ` ${aStr} ${operation}`;
+                html += `<br>`;
+                html += ` ${bStr}\n`;
+
+                const span = document.createElement('span');
+                span.className = 'math-line';
+                // span.style.width = `${66 + (Math.max(a, b) > 100 ? 12 : 0)}%`;
+                html += span.outerHTML;
+
+                if (showResult) {
+                    html += `<span class="with-result"> ${rStr}</span>`;
+                } else {
+                    html += `<span class="with-result invisible">${rStr}</span>`;
+                }
+                html += `</div>`;
+                return html;
+            } else {
+                let expression = `${a} ${operation} ${b}`;
+                if (showResult) {
+                    expression += ` = <span class="with-result"> ${result}</span>`;
+                }
+                return `<div class="exercise">${expression}</div>`;
+            }
+        }
+
+        function randomInt(min, max) {
+            return Math.floor(Math.random() * (max - min + 1)) + min;
+        }
+
+        function generateTerm(digits) {
+            const min = Math.pow(10, digits - 1);
+            const max = Math.pow(10, digits) - 1;
+            return randomInt(min, max);
+        }
+
+        function generateExercise(op, d1, d2, carry, minRes, maxRes) {
+            let a, b, result;
+
+            do {
+                a = generateTerm(d1);
+                b = generateTerm(d2);
+
+                if (op === "+") {
+                    result = a + b;
+                } else {
+                    if (a < b) [a, b] = [b, a];
+                    result = a - b;
+                }
+            } while (
+                result < minRes ||
+                result > maxRes ||
+                (carry && op === "+" && !hasCarry(a, b)) ||
+                (!carry && op === "+" && (a % 10 + b % 10 >= 10)) ||
+                (carry && op === "-" && !hasBorrow(a, b)) ||
+                (!carry && op === "-" && (a % 10 < b % 10))
+            );
+
+            return { a, b, op, result };
+        }
+
+        function hasCarry(a, b) {
+            while (a > 0 && b > 0) {
+                const da = a % 10, db = b % 10;
+                if (da + db >= 10) return true;
+                a = Math.floor(a / 10);
+                b = Math.floor(b / 10);
+            }
+            return false;
+        }
+
+        function hasBorrow(a, b) {
+            while (a > 0 && b > 0) {
+                const da = a % 10, db = b % 10;
+                if (da < db) return true;
+                a = Math.floor(a / 10);
+                b = Math.floor(b / 10);
+            }
+            return false;
+        }
+
+        function horizontalDisplay(a, b, op) {
+            const div = document.createElement('div');
+            div.className = 'exercise';
+            div.textContent = `${a} ${op} ${b} = `;
+            return div;
+        }
+
+        function horizontalDisplayResult(a, b, op, result) {
+            const div = document.createElement('div');
+            div.className = 'exercise';
+            div.innerHTML = `${a} ${op} ${b} = <span class="with-result">${result}</span>`;
+            return div;
+        }
+
+        function verticalDisplay(a, b, op) {
+            const div = document.createElement('div');
+            div.className = 'vertical-exercise';
+            div.innerHTML = formatExercise(a, b, op, false, 'vertical');
+            return div;
+        }
+
+        function verticalDisplayResult(a, b, op, result) {
+            const div = document.createElement('div');
+            div.className = 'vertical-exercise';
+            div.innerHTML = formatExercise(a, b, op, true, 'vertical');
+            return div;
+        }
+
+        document.getElementById('mathForm').addEventListener('submit', function (e) {
+            e.preventDefault();
+
+            const op = document.getElementById('operation').value;
+            const carry = document.getElementById('carryOver').checked;
+            const d1 = parseInt(document.getElementById('digits1').value);
+            const d2 = parseInt(document.getElementById('digits2').value);
+            const minRes = parseInt(document.getElementById('minResult').value);
+            const maxRes = parseInt(document.getElementById('maxResult').value);
+
+            const selection = document.getElementById('questionCount').value;
+            const [mode, count] = selection.split('-');
+            const numExercises = parseInt(count);
+
+            // Header fields
+            const title = document.getElementById('title').value.trim();
+            const subtitle = document.getElementById('subtitle').value.trim();
+            const requirement = document.getElementById('requirement').value.trim();
+            const showName = document.getElementById('showName').checked;
+            const showDate = document.getElementById('showDate').checked;
+            const showScore = document.getElementById('showScore').checked;
+
+            const container = document.getElementById('pagesContainer');
+            container.innerHTML = '';
+
+            const exercises = [];
+            for (let i = 0; i < numExercises; i++) {
+                exercises.push(generateExercise(op, d1, d2, carry, minRes, maxRes));
+            }
+
+            function createHeaderPage() {
+                const header = document.createElement('div');
+                header.className = "page-header-body";
+
+                const meta = [];
+                if (showName) meta.push("Nume:");
+                if (showDate) meta.push("Data:");
+                if (showScore) meta.push("Scor:");
+
+                if (meta.length > 0) {
+                    const metaDiv = document.createElement('div');
+                    metaDiv.className = 'page-meta';
+                    metaDiv.innerHTML = meta.join('<br>') + '<br>';
+                    header.appendChild(metaDiv);
+                }
+
+                const headerDiv = document.createElement('div');
+                headerDiv.className = 'page-header';
+
+                if (title) headerDiv.innerHTML += `<h1>${title}</h1>`;
+                if (subtitle) headerDiv.innerHTML += `<h2>${subtitle}</h2>`;
+                header.appendChild(headerDiv);
+
+                if (requirement) {
+                    const reqDiv = document.createElement('div');
+                    reqDiv.className = 'page-req';
+                    reqDiv.textContent = requirement;
+                    header.appendChild(reqDiv);
+                }
+
+                return header;
+            }
+
+            function createHeaderResultPage() {
+                const header = document.createElement('div');
+                header.className = "page-header-body";
+
+                const meta = [];
+                if (showName) meta.push("Nume:");
+                if (showDate) meta.push("Data:");
+                if (showScore) meta.push("Scor:");
+
+                if (meta.length > 0) {
+                    const metaDiv = document.createElement('div');
+                    metaDiv.className = 'page-meta';
+                    metaDiv.innerHTML = meta.join('<br>') + '<br>';
+                    header.appendChild(metaDiv);
+                }
+
+                const headerDiv = document.createElement('div');
+                headerDiv.className = 'page-header';
+
+                if (title) headerDiv.innerHTML += `<h1>REZULTATE</h1><h2>${title}</h2>`;
+
+                header.appendChild(headerDiv);
+
+                if (requirement) {
+                    const reqDiv = document.createElement('div');
+                    reqDiv.className = 'page-req';
+                    reqDiv.textContent = requirement;
+                    header.appendChild(reqDiv);
+                }
+
+                return header;
+            }
+
+            const page1 = document.createElement('div');
+            const page2 = document.createElement('div');
+            const page1_container = document.createElement('div');
+            const page2_container = document.createElement('div');
+
+            page1_container.className = 'a5-page';
+            page2_container.className = 'a5-page';
+            page1.className = 'grid-container ' + selection;
+            page2.className = 'grid-container ' + selection;
+
+            // Add headers
+            const header1 = createHeaderPage();
+            const header2 = createHeaderResultPage();
+            page1_container.appendChild(header1);
+            page1_container.appendChild(page1);
+            page2_container.appendChild(header2);
+            page2_container.appendChild(page2);
+
+            exercises.forEach(ex => {
+                const el = mode === 'horizontal'
+                    ? horizontalDisplay(ex.a, ex.b, ex.op)
+                    : verticalDisplay(ex.a, ex.b, ex.op);
+                page1.appendChild(el);
+            });
+
+            exercises.forEach(ex => {
+                const el = mode === 'horizontal'
+                    ? horizontalDisplayResult(ex.a, ex.b, ex.op, ex.result)
+                    : verticalDisplayResult(ex.a, ex.b, ex.op, ex.result);
+                page2.appendChild(el);
+            });
+
+            container.appendChild(page1_container);
+            container.appendChild(page2_container);
+        });
+
+
+    </script>
+    <script>
+        function downloadPageAsImage(index) {
+            const pages = document.querySelectorAll('.a5-page');
+            if (index >= pages.length) {
+                alert("Pagina selectată nu există.");
+                return;
+            }
+
+            html2canvas(pages[index], { scale: 2 }).then(canvas => {
+                const link = document.createElement('a');
+                link.download = index === 0 ? 'probleme.png' : 'rezolvari.png';
+                link.href = canvas.toDataURL();
+                link.click();
+            }).catch(err => {
+                console.error('Eroare la generarea imaginii:', err);
+            });
+        }
+    </script>
+</body>
+
+</html>
